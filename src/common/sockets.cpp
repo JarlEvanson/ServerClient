@@ -144,7 +144,11 @@ int Socket::receivePacket(
     void* packetData, 
     unsigned int maxPacketSize
 ) {
-    __socklen_t fromLength = sizeof(sockaddr_in);
+    #if PLATFORM == PLATFORM_UNIX || PLATFORM == PLATFORM_MAC
+        __socklen_t fromLength = sizeof(sockaddr_in);
+    #else if PLATFORM == PLATFORM_WINDOWS
+        SOCKET = sizeof(sockaddr_in);
+    #endif
     int bytes = recvfrom( 
         this->handle, 
         (char*) packetData, 
