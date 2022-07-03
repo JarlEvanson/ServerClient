@@ -29,7 +29,7 @@ int main(int argv, char** argc) {
 
     char* nameString = "Jarl Evanson";
 
-    writer.writeByteArray( (void*)nameString, strlen(nameString) );
+    writer.writeByteArray( (void*)nameString, 12 );
 
     writer.flushBits();
 

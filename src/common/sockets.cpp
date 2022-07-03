@@ -13,7 +13,7 @@ Address::Address(unsigned short port) {
 
 Address::Address(const char* addressString) {
     char* string = (char*) malloc(strlen(addressString));
-    _memccpy(string, addressString, 0, strlen(addressString));
+    memcpy(string, addressString, strlen(addressString));
     char* a = strtok(string, ".");
     unsigned int intA = atoi(a);
     char* b = strtok(NULL, ".");
@@ -144,7 +144,7 @@ int Socket::receivePacket(
     void* packetData, 
     unsigned int maxPacketSize
 ) {
-    int fromLength = sizeof(sockaddr_in);
+    __socklen_t fromLength = sizeof(sockaddr_in);
     int bytes = recvfrom( 
         this->handle, 
         (char*) packetData, 

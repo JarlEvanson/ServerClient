@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <bitset>
+#include <cstring>
 
 #include "common/common.hpp"
 #include "common/packet.hpp"
@@ -16,7 +17,7 @@ uint32_t packetHeader = 0;
 void generatePacketHeader(void) {
     uint32_t h = 0;
     unsigned char *p;
-    char* str = "GAME0.1";
+    const char* str = "GAME0.1";
 
     for (p = (unsigned char*)str; *p != '\0'; p++)
          h = 37 * h + *p;

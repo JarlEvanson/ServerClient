@@ -19,6 +19,7 @@
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <fcntl.h>
+    #include <unistd.h>
 #endif
 
 #if PLATFORM == PLATFORM_WINDOWS
@@ -39,13 +40,13 @@ class Address {
 
 class Socket {
     private:
-        SOCKET handle;
+        int handle;
         bool initHandle();
     public:
         static bool initializeSockets();
         static void shutdownSockets();
         bool bindPort(Address address);
-        bool Socket::sendTo(Address address, const char* packetData, int packetLen);
+        bool sendTo(Address address, const char* packetData, int packetLen);
         int receivePacket(
             sockaddr_in* from,
             void* packetData, 
