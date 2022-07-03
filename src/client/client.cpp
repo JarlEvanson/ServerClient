@@ -27,21 +27,17 @@ int main(int argv, char** argc) {
 
     writer.writeBits(0x12345678, 32);
 
-    char* nameString = "Jarl Evanson";
+    const char* nameString = "Jarl Evanson";
 
     writer.writeByteArray( (void*)nameString, 12 );
 
+    writer.writeBits(10, 16);
+
+    writer.writeFloat(10.01f);
+
+    writer.writeCompressedFloat(2.521f, 0.0f, 10.0f, 0.001);
+
     writer.flushBits();
-
-    BitReader reader(buffer, writer.getBytesWritten());
-
-    reader.readBits(32);
-
-    reader.readBits(32);
-
-    int strLen;
-
-    reader.readByteArray( &strLen );
 
     Address toAddr("127.0.0.1:2050");
 

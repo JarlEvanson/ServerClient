@@ -146,7 +146,7 @@ int Socket::receivePacket(
 ) {
     #if PLATFORM == PLATFORM_UNIX || PLATFORM == PLATFORM_MAC
         __socklen_t fromLength = sizeof(sockaddr_in);
-    #else if PLATFORM == PLATFORM_WINDOWS
+    #elif PLATFORM == PLATFORM_WINDOWS
         int fromLength = sizeof(sockaddr_in);
     #endif
     int bytes = recvfrom( 

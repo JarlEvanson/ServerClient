@@ -3,6 +3,7 @@
 #include <iostream>
 #include <bitset>
 #include <cstring>
+#include <math.h>
 
 #include "common/common.hpp"
 #include "common/packet.hpp"
@@ -27,6 +28,23 @@ void generatePacketHeader(void) {
 //Assumes min value is 0
 constexpr uint32_t bitsRequired(uint32_t num) {
     return num > 0 ? 1 + bitsRequired(num / 2) : 0;
+}
+
+
+
+uint32_t CRC32(const uint8_t data[], size_t dataLen) {
+    uint32_t crc32 = 0xFFFFFFFF;
+
+    for(int index = 0; index < sizeof(packetHeader); index++) {
+        crc32 = (crc32 >> 8) ^ CRCTable[crc32 ^ *( ((uint8_t*) (&packetHeader)) + index ) & 0xFF];
+    }
+    for(size_t index = 0; index < dataLen; index++) {
+        const uint32_t lookupIndex = crc32 ^ data[index] & 0xFF;
+        crc32 = (crc32 >> 8) ^ CRCTable[lookupIndex]; 
+    }
+
+    crc32 ^= 0xFFFFFFFF;
+    return crc32;
 }
 
 //Uint32_t alignment and sizing
@@ -66,10 +84,32 @@ void BitWriter::writeBits(uint32_t value, int bits) {
     bitsWritten += bits;
 }
 
-void BitWriter::flushBits() {
-    if ( scratchBits != 0 ) {
-        this->writeBits(0, 32 - scratchBits);
-    } 
+void BitWriter::writeFloat(float value) {
+    union FloatInt {
+        float fValue;
+        uint32_t iValue;
+    };
+    FloatInt tmp;
+    tmp.fValue = value;
+    this->writeBits(tmp.iValue, 32);
+}
+
+constexpr float clamp(float value, float min, float max) {
+    if ( value < min ) {
+        return min;
+    } else if ( value > max ) {
+        return max;
+    }
+    return value;
+}
+
+void BitWriter::writeCompressedFloat(float value, float min, float max, float res) {
+    const float delta = max - min;
+    const float values = delta / res;
+    const uint32_t maxIntegerValue = (uint32_t) ceil( values );
+    const int bits = bitsRequired( maxIntegerValue );
+    float normalizedValue = clamp( (value - min) / delta, 0.0f, 1.0f );
+    this->writeBits( (uint32_t) floor( normalizedValue * maxIntegerValue + 0.5f ), bits );
 }
 
 //Max of 512 bytes written
@@ -125,6 +165,12 @@ void BitWriter::writeAlign(void) {
     }
 }
 
+void BitWriter::flushBits() {
+    if ( scratchBits != 0 ) {
+        this->writeBits(0, 32 - scratchBits);
+    } 
+}
+
 int BitWriter::getBytesWritten() {
     return (bitsWritten % 32 == 0 ? bitsWritten / 32 : bitsWritten / 32 + 1) * 4;
 }
@@ -164,6 +210,26 @@ uint32_t BitReader::readBits(int bits) {
     totalBitsRead += bits;
 
     return value;
+}
+
+float BitReader::readFloat() {
+    union FloatInt {
+        float fValue;
+        uint32_t iValue;
+    };
+    FloatInt tmp;
+    tmp.iValue = this->readBits(32);
+    return tmp.fValue;
+}
+
+float BitReader::readCompressedFloat(float min, float max, float res) {
+    const float delta = max - min;
+    const float values = delta / res;
+    const uint32_t maxIntegerValue = (uint32_t) ceil( values );
+    const int bits = bitsRequired( maxIntegerValue );
+    
+    const float normalizedValue = this->readBits(bits) / float( maxIntegerValue );
+    return normalizedValue * delta + min;
 }
 
 unsigned char* BitReader::readByteArray( int* size ) {

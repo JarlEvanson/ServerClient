@@ -43,6 +43,12 @@ int main(int argv, char** argc) {
             char* str = (char*) reader.readByteArray( &strLen );
 
             printf("%u: %.*s\n", strLen, strLen, str);
+
+            printf("%u\n", reader.readBits(16));
+
+            printf("%f\n", reader.readFloat());
+
+            printf("%f\n", reader.readCompressedFloat(0.0f, 10.0f, 0.001));
         }  
     }
 }
