@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(Sockets VERSION 0.1.0)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY /home/jarl/Documents/Projects/C++/Sockets)
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_LIST_DIR}>)
 
-add_executable(Sockets src/sockets.cpp)
+add_compile_definitions(ENDIANNESS=${CMAKE_CXX_BYTE_ORDER})
 
-include_directories(Sockets include)
+add_executable(Server src/server/server.cpp src/common/sockets.cpp src/common/packet.cpp)
+
+include_directories(Server include)
+
+add_executable(Client src/client/client.cpp src/common/sockets.cpp src/common/packet.cpp)
