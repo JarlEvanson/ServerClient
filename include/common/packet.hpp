@@ -46,4 +46,11 @@ class BitReader {
         bool readAlign(void);
 };
 
+class Packet {
+    unsigned char* buffer;
+    public: 
+        
+
+}
+
 #endif
