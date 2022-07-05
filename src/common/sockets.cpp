@@ -1,14 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utility>
 
 #include "common/sockets.hpp"
 
+Address::Address(void) {
+    memset( this, 0, sizeof( Address ) );
+}
+
 Address::Address(unsigned short port) {
-    sockaddr_in address;
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
+    memset( this, 0, sizeof ( Address ) );
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons(port);
+}
+
+Address::Address(unsigned char a, unsigned char b, unsigned char c, unsigned char d, unsigned short port) {
+    unsigned int address = (a << 24) | (b << 16) | (c << 8) | d;
+
+    memset( this, 0, sizeof ( Address ) );
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl( address );
+    addr.sin_port = htons( port );
 }
 
 Address::Address(const char* addressString) {
@@ -27,15 +41,14 @@ Address::Address(const char* addressString) {
 
     unsigned int address = (intA << 24) | (intB << 16) | (intC << 8) | intD;
 
-    sockaddr_in addr_in;
-    addr_in.sin_family = AF_INET;
-    addr_in.sin_addr.s_addr = htonl( address );
-    addr_in.sin_port = htons( intPort );
-
-    addr = addr_in;
+    memset( this, 0, sizeof ( Address ) );
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl( address );
+    addr.sin_port = htons( intPort );
 }
 
 Address::Address(sockaddr_in address) {
+    memset( this, 0, sizeof ( Address ) );
     addr = address;
 }
 
@@ -58,6 +71,12 @@ char* Address::toString() {
     return string;
 }
 
+bool Address::operator==(const Address& addr) {
+    if ( this->addr.sin_addr.s_addr == addr.addr.sin_addr.s_addr )
+        return true;
+    return false;
+}
+
 bool Socket::sendTo(Address address, const char* packetData, int packetLen) {
     int sentBytes = sendto(
         handle, 
@@ -76,9 +95,12 @@ bool Socket::sendTo(Address address, const char* packetData, int packetLen) {
 }
 
 Socket::Socket() {
-    if( !initHandle() ) {
-        exit(-1);
-    }
+    handle = -1;
+}
+
+void Socket::move(Socket& source) {
+    this->handle = source.handle;
+    source.handle = -1;
 }
 
 Socket::Socket(Address address) {
@@ -91,7 +113,7 @@ Socket::Socket(Address address) {
 
 bool Socket::bindPort(Address address) {
     if ( bind( handle, (const sockaddr*) &address, sizeof(sockaddr_in) ) < 0 ) {
-        printf("Failed to bind socket");
+        printf("Failed to bind socket\n");
         return false;
     }
     return true;
@@ -101,7 +123,7 @@ bool Socket::initHandle() {
     handle = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
 
     if ( handle <= 0 ) {
-        printf("Failed to create socket");
+        printf("Failed to create socket\n");
         return false;
     }
 
@@ -126,7 +148,7 @@ bool Socket::initializeSockets() {
     #if PLATFORM == PLATFORM_WINDOWS
         WSADATA WsaData;
         if ( !(WSAStartup( MAKEWORD(2, 2), &WsaData ) == NO_ERROR) ) {
-            printf("Failed to initialize sockets");
+            printf("Failed to initialize sockets\n");
             return false;
         }
     #endif
@@ -162,9 +184,11 @@ int Socket::receivePacket(
 }
 
 Socket::~Socket() {
-    #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-        close( this->handle );
-    #elif PLATFORM == PLATFORM_WINDOWS
-        closesocket( this->handle );
-    #endif
+    if ( handle != -1 ) {
+        #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+            close( this->handle );
+        #elif PLATFORM == PLATFORM_WINDOWS
+            closesocket( this->handle );
+        #endif
+    }
 }

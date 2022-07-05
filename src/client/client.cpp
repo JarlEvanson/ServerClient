@@ -1,8 +1,9 @@
 #include <stdio.h>
-
+#include <string.h>
 
 #include "common/sockets.hpp"
 #include "common/packet.hpp"
+#include "common/serialize.hpp"
 
 
 int main(int argv, char** argc) {
@@ -21,21 +22,23 @@ int main(int argv, char** argc) {
 
     unsigned char buffer[256];
 
-    BitWriter writer ( buffer, sizeof(buffer) / 4 );
+    memset( buffer, 0, sizeof( buffer ) );
 
-    writer.writeBits(packetHeader, 32);
+    BitWriter writer ( &buffer[4], (sizeof(buffer) / 4) - 1 );
 
     writer.writeBits(0x12345678, 32);
 
-    const char* nameString = "Jarl Evanson";
+    writer.flushBits();
 
-    writer.writeByteArray( (void*)nameString, 12 );
+    uint32_t crc = CRC32( &buffer[4], writer.getBytesWritten() );
 
-    writer.writeBits(10, 16);
+    printf("%u\n", crc);
 
-    writer.writeFloat(10.01f);
+    writer = BitWriter ( buffer, sizeof( buffer ) / 4 );
 
-    writer.writeCompressedFloat(2.521f, 0.0f, 10.0f, 0.001);
+    writer.writeBits( crc, 32 );
+
+    writer.writeBits(0x12345678, 32);
 
     writer.flushBits();
 

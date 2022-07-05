@@ -2,55 +2,36 @@
 #define GAME_PACKET
 
 #include "common/common.hpp"
+#include "common/sockets.hpp"
+
+#define MAX_PACKET_SIZE 1200
 
 extern uint32_t packetHeader;
 
 void generatePacketHeader(void);
 
-constexpr uint32_t bitsRequired(uint32_t num);
-
-class BitWriter {
-    private:
-        uint64_t scratch;
-        int scratchBits;
-        int fourByteIndex;
-        int fourByteSize;
-        int bitsWritten;
-        uint32_t* buffer;
-    public:
-        BitWriter(void* packetBuffer, int sizeWords);
-        void writeBits(uint32_t  value, int bits);
-        void writeFloat(float value);
-        void writeCompressedFloat(float value, float min, float max, float res);
-        void writeByteArray(void* str, int size);
-        void writeAlign(void);
-        void flushBits();
-        int getBytesWritten();
-        unsigned char* getBuffer();
-};
-
-class BitReader {
-    private:
-        uint64_t scratch;
-        int scratchBits;
-        int totalBits;
-        int totalBitsRead;
-        int fourByteIndex;
-        uint32_t* buffer;
-    public:
-        BitReader(void* packetBuffer, int packetSize);
-        uint32_t readBits(int bits);
-        float readFloat();
-        float readCompressedFloat(float min, float max, float res);
-        unsigned char* readByteArray( int* size );
-        bool readAlign(void);
-};
-
 class Packet {
-    unsigned char* buffer;
-    public: 
-        
+    unsigned char* packetData;
+    bool finalized;  
+    uint32_t bytesUsed;
+    uint32_t maxBytes;
+    BitReader& reader;
+    BitWriter& writer;
+    public:
+        Packet(uint32_t maxPacketSize);
+        Packet(unsigned char* packetData, uint32_t dataLen);
+        ~Packet();
+        uint32_t calculateCRC32(void);
+        void finalize(void);
+};
 
-}
+class PacketTracker {
+    Address address;
+    uint32_t localSequenceNumber;
+    uint32_t localAckBitField;
+    uint32_t remoteSequenceNumber;
+    public:
+        int sendPacket(Socket& socket, void* data, uint32_t dataLen);
+};
 
 #endif

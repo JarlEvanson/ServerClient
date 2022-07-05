@@ -1,17 +1,7 @@
 #ifndef GAME_SOCKETS
 #define GAME_SOCKETS
 
-#define PLATFORM_WINDOWS 1
-#define PLATFORM_MAC 2
-#define PLATFORM_UNIX 3
-
-#if defined(_WIN32) 
-    #define PLATFORM PLATFORM_WINDOWS
-#elif defined(__APPLE__)
-    #define PLATFORM PLATFORM_MAC
-#else
-    #define PLATFORM PLATFORM_UNIX
-#endif
+#include "common/common.hpp"
 
 #if PLATFORM == PLATFORM_WINDOWS 
     #include <winsock2.h>
@@ -30,12 +20,15 @@ class Address {
     private:
         sockaddr_in addr;
     public:
+        Address(void);
         Address(unsigned short port);
+        Address(unsigned char a, unsigned char b, unsigned char c, unsigned char d, unsigned short port);
         Address(const char* string);
         Address(sockaddr_in address);
         int toIntAddress();
         int toPort();
         char* toString();
+        bool operator == (const Address& addr);
 };
 
 class Socket {
@@ -54,6 +47,7 @@ class Socket {
         );
         Socket();
         Socket(Address address);
+        void move(Socket& source);
         ~Socket();
 };
 
