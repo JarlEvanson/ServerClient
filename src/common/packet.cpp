@@ -87,37 +87,60 @@ uint32_t CRC32(const uint8_t data[], size_t dataLen) {
 Packet::Packet(uint32_t maxPacketSize) {
     assert( maxPacketSize <= MAX_PACKET_SIZE );
     this->packetData = (unsigned char*) malloc( maxPacketSize );
+	this->shouldFreeData = true;
     this->maxBytes = maxPacketSize;
     this->bytesUsed = 0;
     this->finalized = false;
+	this->isBitWriter = true;
+	this->bitPacker = malloc( sizeof( BitWriter ) );
+	*( (BitWriter*)this->bitPacker ) = 
+		BitWriter( this->packetData + 4, this->maxBytes / 4 );
 }
 
+//Does not take ownership of ptr
 Packet::Packet(unsigned char* packetData, uint32_t dataLen) {
     assert ( dataLen <= MAX_PACKET_SIZE );
     assert ( packetData != NULL );
 
     this->packetData = packetData;
+	this->shouldFreeData = false;
     this->maxBytes = dataLen;
     this->bytesUsed = dataLen;
     this->finalized = true;
+	this->isBitWriter = false;
+	this->bitPacker = malloc ( sizeof( BitReader ) );
+	*( (BitReader*)this->bitPacker ) =
+		BitReader( this->packetData + 4, this->maxBytes / 4 );
 }   
 
 uint32_t Packet::calculateCRC32(void) {
-    return CRC32( (uint8_t*)packetData, bytesUsed );
+    return CRC32( (uint8_t*)(packetData + 4 ), bytesUsed - ( this->finalized ? 4 : 0 ) );
 }
 
+BitWriter& Packet::getBitWriter(void) {
+	assert( this->isBitWriter );
+	return *( (BitWriter*)bitPacker );
+}
 
+BitReader& Packet::getBitReader(void) {
+	assert( !this->isBitWriter );
+	return *( (BitReader*)bitPacker );
+}
 
 void Packet::finalize(void) {
-    if ( !this->finalized ) {
-        BitWriter writer( this->packetData, 1, NULL );
+    if ( !this->finalized && this->isBitWriter == true) {
+        BitWriter writer( this->packetData, 1 );
+		this->bytesUsed = ((BitWriter*)this->bitPacker)->getBytesWritten();
         writer.writeBits( this->calculateCRC32(), 32 );
-        this->bytesWritten += 4; 
+		((BitWriter*)this->bitPacker)->flushBits();
+        this->bytesUsed += 4; 
         this->finalized = true;
     }
 }
 
 Packet::~Packet() {
-    if ( this->packetData != NULL ) 
+    if ( this->packetData != NULL && this->shouldFreeData ) 
         free( this->packetData );
+	if ( this->bitPacker )
+		free ( this->bitPacker );
 }

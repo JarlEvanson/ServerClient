@@ -8,7 +8,7 @@
 #endif
 
 #if PLATFORM == PLATFORM_WINDOWS
-    LARGE_INTEGER Timer::freq;
+    uint64_t Timer::freq;
 #elif PLATFORM == PLATFORM_UNIX
     bool Timer::usingMonotonic;
 #elif PLATFORM == PLATFORM_MAC
@@ -26,7 +26,7 @@ void Timer::init(void) {
         LARGE_INTEGER tcounter;
         
         if ( QueryPerformanceFrequency( &tcounter ) != 0 ) {
-            freq = tcounter.QuadPart;
+            Timer::freq = (uint64_t) tcounter.QuadPart;
             Timer::initialized = true;
             return;
         }
@@ -61,12 +61,13 @@ uint64_t Timer::getMillisecond(void) {
     #if PLATFORM == PLATFORM_WINDOWS
         LARGE_INTEGER tcounter;
         
+        uint64_t ticks;
         if ( QueryPerformanceCounter( &tcounter ) != 0 ) {
-            return tcounter.QuadPart;
+            ticks = (uint64_t) tcounter.QuadPart;
         } else {
-            return 0;
+            ticks = 0;
         }
-        return (uint64_t) (ticks / ( freq / 1000000 ));
+        return (uint64_t) ( ticks / ( Timer::freq / 1000000 ) );
     #elif PLATFORM == PLATFORM_UNIX
         if ( Timer::usingMonotonic ) {
             struct timespec ts;
@@ -92,5 +93,6 @@ uint64_t Timer::getMillisecond(void) {
 
         tickValue *= Timer::freqNumerator;
         tickValue /= Timer::freqDenominator;
+        return tickValue;
     #endif
 }

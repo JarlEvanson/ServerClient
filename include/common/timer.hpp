@@ -4,6 +4,8 @@
 #include "common/common.hpp"
 
 #if PLATFORM == PLATFORM_WINDOWS
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
     #include <winnt.h>
 #elif PLATFORM == PLATFORM_MAC
     
@@ -15,7 +17,7 @@
 class Timer {
     static bool initialized;
     #if PLATFORM == PLATFORM_WINDOWS
-        static LARGE_INTEGER freq;
+        static uint64_t freq;
     #elif PLATFORM == PLATFORM_UNIX
         static bool usingMonotonic;
     #elif PLATFORM == PLATFORM_MAC

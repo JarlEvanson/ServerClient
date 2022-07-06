@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "common/sockets.hpp"
+#include "common/packet.hpp"
 
 Address::Address(void) {
     memset( this, 0, sizeof( Address ) );
@@ -92,6 +93,15 @@ bool Socket::sendTo(Address address, const char* packetData, int packetLen) {
         return false;
     }
     return true;
+}
+
+bool Socket::sendTo(Address address, Packet& packet) {
+    packet.finalize();
+    return this->sendTo(
+        address,
+        (char*)packet.packetData,
+        packet.bytesUsed
+    );
 }
 
 Socket::Socket() {

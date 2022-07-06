@@ -2,9 +2,11 @@
 #define GAME_SOCKETS
 
 #include "common/common.hpp"
+#include "common/packet.hpp"
 
 #if PLATFORM == PLATFORM_WINDOWS 
     #include <winsock2.h>
+    #pragma comment(lib, "wsock32.lib")
 #elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
     #include <sys/socket.h>
     #include <netinet/in.h>
@@ -12,9 +14,7 @@
     #include <unistd.h>
 #endif
 
-#if PLATFORM == PLATFORM_WINDOWS
-#pragma comment(lib, "wsock32.lib")
-#endif
+class Packet;
 
 class Address {
     private:
@@ -40,6 +40,7 @@ class Socket {
         static void shutdownSockets();
         bool bindPort(Address address);
         bool sendTo(Address address, const char* packetData, int packetLen);
+        bool sendTo(Address address, Packet& packet);
         int receivePacket(
             sockaddr_in* from,
             void* packetData, 

@@ -12,10 +12,9 @@ class BitWriter {
         int fourByteIndex;
         int fourByteSize;
         int bitsWritten;
-        uint32_t& bytesWritten;
         uint32_t* buffer;
     public:
-        BitWriter(void* packetBuffer, int sizeWords, uint32_t& bytesWritten);
+        BitWriter(void* packetBuffer, int sizeWords);
         void writeBits(uint32_t  value, int bits);
         void writeFloat(float value);
         void writeCompressedFloat(float value, float min, float max, float res);
@@ -41,6 +40,11 @@ class BitReader {
         float readCompressedFloat(float min, float max, float res);
         unsigned char* readByteArray( int* size );
         bool readAlign(void);
+};
+
+class Serializable {
+    virtual void serialize(BitWriter& writer) = 0;
+    virtual void deserialize(BitReader& reader) = 0;
 };
 
 

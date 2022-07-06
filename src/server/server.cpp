@@ -75,10 +75,12 @@ void Server::run(void) {
 
             BitReader reader( packetData, bytesRead );
 
-            uint32_t checksum = CRC32( packetData+4, bytesRead - 4);
+            Packet packet( packetData, bytesRead );
+
+            uint32_t checksum = packet.calculateCRC32();
             uint32_t packetChecksum = reader.readBits( 32 );
 
-            if ( memcmp( &checksum, &packetChecksum, 4 ) != 0 ) 
+            if ( checksum != packetChecksum )
                 continue;
 
             int32_t index = checkConnection( from );

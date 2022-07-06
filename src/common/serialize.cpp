@@ -15,13 +15,12 @@ constexpr uint32_t bitsRequired(uint32_t num) {
 }
 
 //Uint32_t alignment and sizing
-BitWriter::BitWriter(void* packetBuffer, int fourByteSize, uint32_t& bytesWritten) {
+BitWriter::BitWriter(void* packetBuffer, int fourByteSize) {
     scratch = 0;
     scratchBits = 0;
     fourByteIndex = 0;
     bitsWritten = 0;
     this->fourByteSize = fourByteSize;
-    this->bytesWritten = bytesWritten;
     buffer = (uint32_t*) packetBuffer;
 }
 
@@ -46,7 +45,6 @@ void BitWriter::writeBits(uint32_t value, int bits) {
         scratch >>= 32;
         scratchBits -= 32;
         fourByteIndex++;
-        (*this->bytesWritten) += 4;
     }
 
     bitsWritten += bits;
@@ -116,7 +114,6 @@ void BitWriter::writeByteArray(void* str, int size) {
     strPtr += bytesToCopy;
     fourByteIndex += bytesToCopy / 4;
     bitsWritten += bytesToCopy * 8;
-    (*this->bytesWritten) += bytesToCopy;
 
     for( int index = 0; index < bytesToWriteEnd; index++ ) {
         this->writeBits( *strPtr, 8 );
