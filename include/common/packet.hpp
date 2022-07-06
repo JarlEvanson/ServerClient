@@ -10,8 +10,6 @@ class Socket;
 
 #define MAX_PACKET_SIZE 1200
 
-extern uint32_t packetHeader;
-
 void generatePacketHeader(void);
 
 class Packet {
@@ -21,7 +19,10 @@ class Packet {
     uint32_t bytesUsed;
     uint32_t maxBytes;
     bool isBitWriter;
-    void* bitPacker;
+    union {
+        BitReader reader;
+        BitWriter writer;
+    };
     public:
         Packet(uint32_t maxPacketSize);
         Packet(unsigned char* packetData, uint32_t dataLen);

@@ -122,7 +122,7 @@ NPTTimeStamp Timer::getNTPTimeStamp(void) {
 }
 
 //Ignores leap seconds
-char* Timer::NPTToFormatted(NPTTimeStamp& timeStamp) {
+char* Timer::NPTToFormatted(NPTTimeStamp timeStamp) {
     uint64_t sSinceUnixEpoch = 
         ( ( timeStamp.seperated.seconds - 2208988800 ) * 1000 +
         ((( (uint64_t)timeStamp.seperated.fractionalSeconds ) * 1000) >> 32) ) / 1000;

@@ -26,7 +26,7 @@ class Timer {
         static void init(void);
         static uint64_t getMillisecond(void);
         static NPTTimeStamp getNTPTimeStamp(void);
-        static char* NPTToFormatted(NPTTimeStamp& timeStamp);
+        static char* NPTToFormatted(NPTTimeStamp timeStamp);
 };
 
 #endif

@@ -92,9 +92,7 @@ Packet::Packet(uint32_t maxPacketSize) {
     this->bytesUsed = 0;
     this->finalized = false;
 	this->isBitWriter = true;
-	this->bitPacker = malloc( sizeof( BitWriter ) );
-	*( (BitWriter*)this->bitPacker ) = 
-		BitWriter( this->packetData + 4, this->maxBytes / 4 );
+	this->writer = BitWriter( this->packetData + 4, this->maxBytes / 4 );
 }
 
 //Does not take ownership of ptr
@@ -108,9 +106,7 @@ Packet::Packet(unsigned char* packetData, uint32_t dataLen) {
     this->bytesUsed = dataLen;
     this->finalized = true;
 	this->isBitWriter = false;
-	this->bitPacker = malloc ( sizeof( BitReader ) );
-	*( (BitReader*)this->bitPacker ) =
-		BitReader( this->packetData + 4, this->maxBytes / 4 );
+	this->reader = BitReader( this->packetData + 4, this->maxBytes / 4 );
 }   
 
 uint32_t Packet::calculateCRC32(void) {
@@ -119,20 +115,20 @@ uint32_t Packet::calculateCRC32(void) {
 
 BitWriter& Packet::getBitWriter(void) {
 	assert( this->isBitWriter );
-	return *( (BitWriter*)bitPacker );
+	return this->writer;
 }
 
 BitReader& Packet::getBitReader(void) {
 	assert( !this->isBitWriter );
-	return *( (BitReader*)bitPacker );
+	return this->reader;
 }
 
 void Packet::finalize(void) {
     if ( !this->finalized && this->isBitWriter == true) {
         BitWriter writer( this->packetData, 1 );
-		this->bytesUsed = ((BitWriter*)this->bitPacker)->getBytesWritten();
+		this->bytesUsed = this->writer.getBytesWritten();
         writer.writeBits( this->calculateCRC32(), 32 );
-		((BitWriter*)this->bitPacker)->flushBits();
+		this->writer.flushBits();
         this->bytesUsed += 4; 
         this->finalized = true;
     }
@@ -141,6 +137,4 @@ void Packet::finalize(void) {
 Packet::~Packet() {
     if ( this->packetData != NULL && this->shouldFreeData ) 
         free( this->packetData );
-	if ( this->bitPacker )
-		free ( this->bitPacker );
 }

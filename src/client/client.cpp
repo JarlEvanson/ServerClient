@@ -4,12 +4,14 @@
 #include "common/sockets.hpp"
 #include "common/packet.hpp"
 #include "common/serialize.hpp"
+#include "common/timer.hpp"
 
 
 int main(int argv, char** argc) {
-    generatePacketHeader();
+    Timer::init();
+    printf( "Starting at %s\n", Timer::NPTToFormatted( Timer::getNTPTimeStamp() ) );
 
-    printf("Packet Header: 0x%x\n", packetHeader);
+    generatePacketHeader();
     //Initialize Sockets
 
     //Create and bind socket

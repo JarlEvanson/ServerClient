@@ -12,6 +12,7 @@ add_executable(
     src/common/packet.cpp
     src/common/timer.cpp
     src/common/serialize.cpp
+    src/common/log.cpp
 )
 
 include_directories(Server include)

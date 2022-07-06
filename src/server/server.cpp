@@ -12,12 +12,9 @@
 
 int main(int argv, char** argc) {
     Timer::init();
-
-    NPTTimeStamp ts = Timer::getNTPTimeStamp();
-    printf( "Starting at %s\n", Timer::NPTToFormatted(ts) );;
+    printf( "Starting at %s\n", Timer::NPTToFormatted( Timer::getNTPTimeStamp() ) );
 
     generatePacketHeader();
-    printf( "Packet Header: 0x%x\n", packetHeader );
 
     Server server(64);
 
