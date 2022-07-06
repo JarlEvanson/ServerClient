@@ -11,11 +11,13 @@
 #include "server/server.hpp"
 
 int main(int argv, char** argc) {
-    generatePacketHeader();
-
-    printf("Packet Header: 0x%x\n", packetHeader);
-
     Timer::init();
+
+    NPTTimeStamp ts = Timer::getNTPTimeStamp();
+    printf( "Starting at %s\n", Timer::NPTToFormatted(ts) );;
+
+    generatePacketHeader();
+    printf( "Packet Header: 0x%x\n", packetHeader );
 
     Server server(64);
 

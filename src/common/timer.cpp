@@ -2,7 +2,20 @@
 #include "common/common.hpp"
 #include "common/timer.hpp"
 
-#if PLATFORM == PLATFORM_UNIX
+#include <chrono>
+#include <stdio.h>
+#include <stdlib.h>
+
+
+#if PLATFORM == PLATFORM_WINDOWS
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    #include <winnt.h>
+    #include <sysinfoapi.h>
+#elif PLATFORM == PLATFORM_MAC
+    
+#elif PLATFORM == PLATFORM_UNIX
+    #include <unistd.h>
     #include <time.h>
     #include <sys/time.h>
 #endif
@@ -95,4 +108,54 @@ uint64_t Timer::getMillisecond(void) {
         tickValue /= Timer::freqDenominator;
         return tickValue;
     #endif
+}
+
+
+//Ignores leap seconds
+NPTTimeStamp Timer::getNTPTimeStamp(void) {
+    uint64_t msSinceUnixEpoch = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::system_clock::now().time_since_epoch() ).count();
+
+    NPTTimeStamp timeStamp;
+    timeStamp.seperated.seconds = msSinceUnixEpoch / 1000 + 2208988800;
+    timeStamp.seperated.fractionalSeconds = ((( (uint64_t)msSinceUnixEpoch ) % 1000 ) << 32) / 1000;
+    return timeStamp;
+}
+
+//Ignores leap seconds
+char* Timer::NPTToFormatted(NPTTimeStamp& timeStamp) {
+    uint64_t sSinceUnixEpoch = 
+        ( ( timeStamp.seperated.seconds - 2208988800 ) * 1000 +
+        ((( (uint64_t)timeStamp.seperated.fractionalSeconds ) * 1000) >> 32) ) / 1000;
+
+    uint32_t day = sSinceUnixEpoch / ( 24 * 60 * 60 ) + 1;
+    uint32_t year = 1970;
+
+    uint8_t monthArr[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+    while( day > 365 ) {
+        day -= 365;
+        if ( year % 4 == 0 ) {
+            if ( year % 100 != 0 || year % 400 == 0 ) {
+                day -= 1;
+                if ( day < 365 ) {
+                    monthArr[1]++;
+                }
+            }
+        }
+        year++;
+    }
+
+    uint8_t monthIndex = 0;
+    while ( day > monthArr[monthIndex] ) {
+        day -= monthArr[monthIndex];
+        monthIndex++;
+    }
+
+    char* str = (char*) malloc( 21 );
+
+    uint32_t secondsToday = sSinceUnixEpoch % ( 24 * 60 * 60 );
+
+    sprintf( str, "%.4u-%.2u-%.2uT%.2u:%.2u:%.2uZ", year, monthIndex + 1, day, (secondsToday / (60 * 60)), (secondsToday % (60 * 60)) / 60, secondsToday % 60 );
+
+    return str;
 }

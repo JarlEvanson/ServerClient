@@ -3,16 +3,13 @@
 
 #include "common/common.hpp"
 
-#if PLATFORM == PLATFORM_WINDOWS
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winnt.h>
-#elif PLATFORM == PLATFORM_MAC
-    
-#elif PLATFORM == PLATFORM_UNIX
-    #include <unistd.h>
-#endif
-
+typedef union _NPT_TimeStamp {
+    struct {
+        uint32_t seconds;
+        uint32_t fractionalSeconds;
+    } seperated;
+    uint64_t timeStamp;
+} NPTTimeStamp;
 
 class Timer {
     static bool initialized;
@@ -28,7 +25,8 @@ class Timer {
     public:
         static void init(void);
         static uint64_t getMillisecond(void);
-
+        static NPTTimeStamp getNTPTimeStamp(void);
+        static char* NPTToFormatted(NPTTimeStamp& timeStamp);
 };
 
 #endif
