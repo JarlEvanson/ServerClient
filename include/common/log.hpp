@@ -1,10 +1,9 @@
 #ifndef GAME_LOGGER
 #define GAME_LOGGER
 
-#include <filesystem>
+#include "common/common.hpp"
 
-class Logger {  
-    static std::filesystem::path mDir;
+class Logger {
     static char* mFileName;
     static uint32_t mHandle;
     static bool mInitialized;
@@ -12,7 +11,7 @@ class Logger {
     static size_t mBufferSize;
     public:
         static void init(const char* name, size_t bufferSize);
-        static void log(char* msg);
+        static void log(const char* fmt, ...);
         static void terminate(void);
 };
 

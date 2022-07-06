@@ -7,12 +7,17 @@
 #include "common/packet.hpp"
 #include "common/timer.hpp"
 #include "common/serialize.hpp"
+#include "common/log.hpp"
 
 #include "server/server.hpp"
 
 int main(int argv, char** argc) {
     Timer::init();
-    printf( "Starting at %s\n", Timer::NPTToFormatted( Timer::getNTPTimeStamp() ) );
+
+    Logger::init("serverLog", 10);
+
+    Logger::log("%s", "Starting");
+
 
     generatePacketHeader();
 
@@ -93,7 +98,7 @@ void Server::run(void) {
 }
 
 int32_t Server::checkConnection(Address address) {
-    for( int index = 0; index < maxConnections; index++ ) {
+    for( uint32_t index = 0; index < maxConnections; index++ ) {
         if ( this->clients[index].getAddress() == address ) {
             return index;
         }
@@ -106,7 +111,7 @@ int32_t Server::checkConnection(Address address) {
 
 void Server::pruneConnections(void) {
     uint64_t startPruneTime = Timer::getMillisecond();
-    for ( int index = 0; index < maxConnections; index++ ) {
+    for ( uint32_t index = 0; index < maxConnections; index++ ) {
         if ( 
             this->clients[index].getLastPacketTime() + WAIT_TIME_SECS * 1000 < startPruneTime &&
             !( this->clients[index] == ClientDescriptor() )
@@ -118,7 +123,7 @@ void Server::pruneConnections(void) {
 }
 
 int32_t Server::addConnection(Address address) {
-    for( int index = 0; index < maxConnections; index++ ) {
+    for( uint32_t index = 0; index < maxConnections; index++ ) {
         if ( this->clients[index] == ClientDescriptor() ) {
             this->clients[index] = ClientDescriptor(address, Timer::getMillisecond());
             currentConnections++;

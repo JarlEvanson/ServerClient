@@ -113,10 +113,18 @@ uint64_t Timer::getMillisecond(void) {
 
 //Ignores leap seconds
 NPTTimeStamp Timer::getNTPTimeStamp(void) {
-    uint64_t msSinceUnixEpoch = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::system_clock::now().time_since_epoch() ).count();
+    uint64_t msSinceUnixEpoch; //Unix epoch is January 1, 1970
+    #if PLATFORM == PLATFORM_UNIX
+        msSinceUnixEpoch = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::system_clock::now().time_since_epoch() ).count();
+    #elif PLATFORM == PLATFORM_WINDOWS
+        FILETIME ft;
+        GetSystemTimeAsFileTime( &ft );
+        uint64_t msSinceWindowsEpoch =  ( (uint64_t)ft.dwLowDateTime + ((uint64_t)(ft.dwHighDateTime) << 32) ) / 10000; //Windows Epoch is January 1, 1601
 
+        msSinceUnixEpoch = msSinceWindowsEpoch - (uint64_t) 11644473600000; //11644473600000 is ms between Windows Epoch and Unix Epoch
+    #endif
     NPTTimeStamp timeStamp;
-    timeStamp.seperated.seconds = msSinceUnixEpoch / 1000 + 2208988800;
+    timeStamp.seperated.seconds = msSinceUnixEpoch / 1000 + ( (uint32_t)2208988800 );
     timeStamp.seperated.fractionalSeconds = ((( (uint64_t)msSinceUnixEpoch ) % 1000 ) << 32) / 1000;
     return timeStamp;
 }
@@ -124,7 +132,7 @@ NPTTimeStamp Timer::getNTPTimeStamp(void) {
 //Ignores leap seconds
 char* Timer::NPTToFormatted(NPTTimeStamp timeStamp) {
     uint64_t sSinceUnixEpoch = 
-        ( ( timeStamp.seperated.seconds - 2208988800 ) * 1000 +
+        ( ( (uint64_t)(timeStamp.seperated.seconds) - 2208988800 ) * 1000 +
         ((( (uint64_t)timeStamp.seperated.fractionalSeconds ) * 1000) >> 32) ) / 1000;
 
     uint32_t day = sSinceUnixEpoch / ( 24 * 60 * 60 ) + 1;
